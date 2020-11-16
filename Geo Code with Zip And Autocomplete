@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Leaflet</title>
+   <script type="text/javascript" src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
+   <style type="text/css">
+     .listdata:hover{
+      background: #fff;
+      cursor: pointer;
+     }
+     .resultinli{
+          height: 100px;
+        overflow: auto;
+        list-style: none;padding: 0;
+        display: none;
+     }
+   </style>
+</head>
+<body>
+   <div class="container mt-5">
+     <div class="row">
+       <div class="col-sm-12">
+
+        <div><input id="address" autocomplete="off"></div>
+        <div style="    background: #80808061;width: 16%;" class="searchresult">
+          <ul  class="resultinli">
+          </ul>
+        </div>
+
+</div>
+     </div>
+   </div>
+<br>
+<span><small>GENERATE FROM MAPBOX</small></span>
+<div class="postalcode"> POSTAL CODE HERE</div>
+<hr>
+<span><small>GENERATE FROM geocode.xyz</small></span>
+<div class="postalcodegeo"> POSTAL CODE HERE</div>
+</body>
+<script type="text/javascript">
+  $(document).delegate('#address','keydown',function(){
+     var address = $('#address').val();
+     $.getJSON('https://app.geocodeapi.io/api/v1/autocomplete?apikey=14a760e0-280b-11eb-ab79-71d9a48a1c87&text='+address+'&size=5', function(data) {
+      
+      $('.completeaddress').html('');
+      $('.resultinli').html('');
+        var htmladdress = '';
+        for(i in data['features']){
+          // $('.completeaddress').append('<div>'+data['features'][i]['properties'].label+'</div>');
+          htmladdress+= '<li class="listdata" data-lat="'+data['features'][i]['geometry']['coordinates'][1]+'" data-lon="'+data['features'][i]['geometry']['coordinates'][0]+'" data-address="'+data['features'][i]['properties'].label+'" >'+data['features'][i]['properties'].label+'</li>';
+        }
+          htmladdress += '';
+          $('.resultinli').append(htmladdress);
+          $('.resultinli').show();
+     });
+  });
+
+  $(document).delegate('.listdata','click',function(){
+    var addressSelect =$(this).data('address');
+    var lat =$(this).data('lat');
+    var lon =$(this).data('lon');
+    $('.resultinli').hide();
+    $('#address').val(addressSelect);
+    getPostalCode(lat,lon);
+  });
+
+  // https://app.geocodeapi.io/
+  $(document).delegate('.listdata','click',function(){
+    var addressSelect = $('#address').val();
+     $.getJSON('https://api.mapbox.com/geocoding/v5/mapbox.places/'+addressSelect+'.json?access_token=pk.eyJ1IjoiZmlyZWJhc2V0ZXN0aW5nIiwiYSI6ImNqcmx0anZkNDBiNnA0NG1zazQzemp5OHcifQ.A0FvkJ2gt4z9nE4eyvSH5w', function(data) {
+        $('.postalcode').html(data['features'][0]['context'][1].text);
+      });
+  });
+
+  // Changes XML to JSON
+function xmlToJson(xml) {
+  
+  // Create the return object
+  var obj = {};
+
+  if (xml.nodeType == 1) { // element
+    // do attributes
+    if (xml.attributes.length > 0) {
+    obj["@attributes"] = {};
+      for (var j = 0; j < xml.attributes.length; j++) {
+        var attribute = xml.attributes.item(j);
+        obj["@attributes"][attribute.nodeName] = attribute.nodeValue;
+      }
+    }
+  } else if (xml.nodeType == 3) { // text
+    obj = xml.nodeValue;
+  }
+
+  // do children
+  if (xml.hasChildNodes()) {
+    for(var i = 0; i < xml.childNodes.length; i++) {
+      var item = xml.childNodes.item(i);
+      var nodeName = item.nodeName;
+      if (typeof(obj[nodeName]) == "undefined") {
+        obj[nodeName] = xmlToJson(item);
+      } else {
+        if (typeof(obj[nodeName].push) == "undefined") {
+          var old = obj[nodeName];
+          obj[nodeName] = [];
+          obj[nodeName].push(old);
+        }
+        obj[nodeName].push(xmlToJson(item));
+      }
+    }
+  }
+  return obj;
+};
+
+  // https://geocode.xyz/51.769601,-3.075569?geoit=xml
+  function getPostalCode(lat,lon){
+    $.get('https://geocode.xyz/51.50354,-0.12768?geoit=xml', function(data) {
+      var jsonText = xmlToJson(data);
+      var splitingObj = JSON.stringify(jsonText['geodata']['postal']);
+      var splitText = splitingObj.split();
+      });
+  }
+
+   var test = '{"#text":"SW1A2AA"}';  
+   var splitingObj = test;
+   var splitText = splitingObj.split(':');
+   var splitText1 = splitText[1].split('}');
+   var splitText2 = splitText1[0].split('"');
+   console.log(splitText2[1]);
+</script>
+</html>
